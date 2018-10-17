@@ -6,9 +6,9 @@ if ("serviceWorker" in navigator){
   window.addEventListener("load", function(){
 
 // if it does then we register Service Wroker
-  navigator.serviceWorker.register("sw.js", {scope:"./"})
+  navigator.serviceWorker.register("./sw.js")
   .then(function(registration){
-    console.log("It worked with scope: ", registration.scope)
+    console.log("It worked with scope: "+ registration.scope);
  // if not then registration fails
   }).catch(function(error){
     console.log("Service Worker failed", error);
