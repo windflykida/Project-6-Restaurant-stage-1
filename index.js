@@ -3,8 +3,6 @@
  */
  // we check if the browser supports Service Worker
 if ("serviceWorker" in navigator){
-  window.addEventListener("load", function(){
-
 // if it does then we register Service Wroker
   navigator.serviceWorker.register("./sw.js")
   .then(function(registration){
@@ -13,5 +11,4 @@ if ("serviceWorker" in navigator){
   }).catch(function(error){
     console.log("Service Worker failed", error);
   });
-});
-}
+};
