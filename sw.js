@@ -1,14 +1,11 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/Cache
 
-var mainCacheName = "1";
-var currentCache = {
-  font:"font-cache-v" + mainCacheName
-};
+var mainCacheName = "my-restaurant-cache-v11";
+
 var urlToCache = [
-  "./",
-  "./index.html",
-  "./restaurant.html",
+  "/",
   "./css/styles.css",
+  "./css/responsive.css",
   "./data/restaurants.json",
   "./img/1.jpg",
   "./img/2.jpg",
@@ -23,13 +20,17 @@ var urlToCache = [
   "./js/main.js",
   "./js/restaurant_info.js",
   "./js/dbhelper.js",
+  "./index.html",
+  "./restaurant.html",
 ];
+
 
 self.addEventListener("install", function(event){
     event.waitUntil(
-      caches.open(currentCache).then(function(){
+      caches.open(mainCacheName)
+      .then(function(cache){
         console.log("Opened cache");
-          // return cache.addAll(urlToCache);
+          return cache.addAll(urlToCache);
       }).catch(function(){
         console.log("Failed to create catche");
       })
@@ -37,46 +38,40 @@ self.addEventListener("install", function(event){
 });
 
 self.addEventListener("activate", function(event){
-  var expextedCacheName = Object.values(currentCache);
-    event.waitUntil(
-      caches.keys().then(function(cacheNames){
-        return Promise.all(
-          cacheNames.map(function(cacheName){
-            return (!expextedCacheName.includes(cacheName))
-              console.log("Deleting out of date cache:", cacheName);
+
+  const cacheList = [mainCacheName];
+   event.waitUntil(
+     caches.keys().then(function(cacheNames){
+       return Promise.all(
+         cacheNames.map(function(cacheName){
+           if(cacheList.indexOf(cacheName) === -1){
+             return caches.delete(cacheName);
+           }
+         })
+       );
+     })
+   );
+});
 
 
-            return caches.delete(cacheName);
-          })
-        )
-    })
-  );
-  });
+self.addEventListener("fetch", function(event){
+    console.log("Fetch event for " , event.request);
+    event.respondWith(
+      caches.match(event.request)
+      .then(function(response){
+        if(response){
+          console.log("Found ", event.request, " in cache");
+          return response;
+        }else{
+        console.log("Network request for", event.request);
+        return fetch(event.request).then(function(response){
+         return caches.open(mainCacheName).then(function(cache){
+           cache.put(event.request, response.clone());
+             return response;
+        });
 
-  self.addEventListener("fetch", function(event){
-    console.log('Handling fetch event for', event.request.url);
-      event.respondWith(
-        caches.open(currentCache["font"])
-          .then(function(cache){
-            return caches.match(event.request)
-              .then(function(response){
-                if (response){
-                  console.log("Found response in cache:", response);
-                  return response;
+      });
+    };
+}))
 
-                }else{
-                  console.log("Fetching request from the network");
-                  return fetch(event.request).then(function(response) {
-                    cache.put(event.request, response.clone());
-
-                    return response;
-                  })
-
-                  };
-                        }).catch(function(error){
-                          console.error("Error in fetch handler:", error);
-                            return error;
-                  });
-                }));
-
-            });
+});
